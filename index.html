@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIH26093 — Stress & Trauma Assessment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F3F5F3;
+    --panel: #FFFFFF;
+    --ink: #152420;
+    --ink-soft: #55645F;
+    --line: #D8DEDA;
+    --teal: #2F6F62;
+    --teal-soft: #E4EEEB;
+    --amber: #B8863B;
+    --amber-soft: #F5EBDB;
+    --rose: #B23A48;
+    --rose-soft: #F6E3E4;
+  }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+  html, body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height: 1.55;
+  }
+  a { color: var(--teal); }
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+  header.masthead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 20px;
+    margin-bottom: 8px;
+  }
+  .ps-id {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 32px;
+    letter-spacing: -0.01em;
+    margin: 14px 0 6px;
+  }
+  .lede {
+    color: var(--ink-soft);
+    max-width: 52ch;
+    font-size: 15px;
+    margin: 0 0 40px;
+  }
+  .disclaimer {
+    font-size: 13px;
+    color: var(--ink-soft);
+    background: var(--amber-soft);
+    border: 1px solid #E7D2AC;
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 40px;
+  }
+  section.block {
+    border-top: 1px solid var(--line);
+    padding: 32px 0;
+  }
+  section.block h2 {
+    font-size: 17px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  section.block .hint {
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    margin: 0 0 18px;
+  }
+  textarea, .dropzone {
+    width: 100%;
+    font-family: inherit;
+    font-size: 15px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: var(--panel);
+    color: var(--ink);
+  }
+  textarea:focus, input:focus, button:focus-visible {
+    outline: 2px solid var(--teal);
+    outline-offset: 2px;
+  }
+  textarea { resize: vertical; min-height: 88px; }
+  .file-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px dashed var(--line);
+    border-radius: 8px;
+    padding: 14px;
+    background: var(--panel);
+    font-size: 14px;
+    color: var(--ink-soft);
+  }
+  .file-row input[type=file] { font-size: 13px; color: var(--ink); }
+  button.primary {
+    margin-top: 14px;
+    background: var(--teal);
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    padding: 10px 20px;
+    font-size: 14.5px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  button.primary:hover { background: #275a4f; }
+  button.primary:disabled { background: #9BB0AB; cursor: default; }
+
+  .result { margin-top: 22px; }
+  .meter-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .meter-track {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: #E6EAE7;
+    overflow: hidden;
+  }
+  .meter-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+  .meter-score {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    min-width: 3.5ch;
+    text-align: right;
+  }
+  .risk-label {
+    display: inline-block;
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 100px;
+    margin-bottom: 12px;
+  }
+  .risk-low { background: var(--teal-soft); color: var(--teal); }
+  .risk-moderate { background: var(--amber-soft); color: var(--amber); }
+  .risk-high { background: var(--rose-soft); color: var(--rose); }
+
+  dl.meta {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 14px;
+    font-size: 13.5px;
+    margin: 0;
+  }
+  dl.meta dt { color: var(--ink-soft); }
+  dl.meta dd { margin: 0; }
+  .mono { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; }
+
+  .error-note {
+    font-size: 13.5px;
+    color: var(--rose);
+    background: var(--rose-soft);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-top: 14px;
+  }
+  .muted-note {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-top: 14px;
+  }
+
+  ul.status-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 13.5px;
+  }
+  ul.status-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  ul.status-list li:last-child { border-bottom: none; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-on { background: var(--teal); }
+  .dot-fallback { background: var(--amber); }
+  .dot-off { background: #B7BFBB; }
+  .status-name { flex: 1; }
+  .status-state { color: var(--ink-soft); font-size: 12.5px; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+    margin-top: 8px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <span class="ps-id">SIH26093</span>
+      <h1>Stress &amp; trauma assessment</h1>
+    </div>
+  </header>
+
+  <p class="lede">Enter a message or upload a short recording to get a real-time risk read on a complainant's distress, combining language content and — for audio — how it's spoken.</p>
+
+  <div class="disclaimer">Prototype for demonstration. Scores are not a validated clinical or forensic measure and should not be used to make real decisions about anyone's safety.</div>
+
+  <section class="block">
+    <h2>Text assessment</h2>
+    <p class="hint">Works in English and Hindi.</p>
+    <textarea id="textInput" placeholder="Type or paste the complainant's message here…"></textarea>
+    <br>
+    <button class="primary" onclick="assessText()" id="textBtn">Analyze text</button>
+    <div id="textResult" class="result"></div>
+  </section>
+
+  <section class="block">
+    <h2>Voice assessment</h2>
+    <p class="hint">Upload a short audio clip. Transcription runs when available; the vocal-tone reading always runs on the raw audio.</p>
+    <div class="file-row">
+      <span>🎙</span>
+      <input id="audioFile" type="file" accept="audio/*" />
+    </div>
+    <button class="primary" onclick="assessVoice()" id="voiceBtn">Analyze recording</button>
+    <div id="voiceResult" class="result"></div>
+  </section>
+
+  <section class="block">
+    <h2>System status</h2>
+    <p class="hint">What's actually running behind this demo, updated on page load.</p>
+    <ul class="status-list" id="statusList">
+      <li><span class="dot dot-off"></span><span class="status-name">Checking…</span></li>
+    </ul>
+  </section>
+
+  <footer>
+    Smart India Hackathon 2026 · Problem Statement SIH26093
+  </footer>
+
+</div>
+
+<script>
+  // Set this to your deployed Railway backend URL before publishing the
+  // frontend, e.g. "https://your-app-name.up.railway.app". Left pointing
+  // at localhost for local development.
+  const API_BASE_URL = "http://127.0.0.1:8000";
+
+  function riskClass(label) {
+    if (label === 'HIGH_RISK') return 'risk-high';
+    if (label === 'MODERATE_RISK') return 'risk-moderate';
+    return 'risk-low';
+  }
+  function riskWord(label) {
+    if (label === 'HIGH_RISK') return 'High risk';
+    if (label === 'MODERATE_RISK') return 'Moderate risk';
+    return 'Low risk';
+  }
+  function meterColor(label) {
+    if (label === 'HIGH_RISK') return 'var(--rose)';
+    if (label === 'MODERATE_RISK') return 'var(--amber)';
+    return 'var(--teal)';
+  }
+
+  function renderResult(el, data, opts) {
+    const pct = Math.round((data.risk_score ?? 0) * 100);
+    const rows = opts.metaRows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+    el.innerHTML = `
+      <span class="risk-label ${riskClass(data.risk_label)}">${riskWord(data.risk_label)}</span>
+      <div class="meter-row">
+        <div class="meter-track"><div class="meter-fill" style="width:${pct}%; background:${meterColor(data.risk_label)}"></div></div>
+        <span class="meter-score mono">${data.risk_score.toFixed(2)}</span>
+      </div>
+      <dl class="meta">${rows}</dl>
+    `;
+  }
+
+  async function assessText() {
+    const text = document.getElementById('textInput').value;
+    const btn = document.getElementById('textBtn');
+    const el = document.getElementById('textResult');
+    if (!text.trim()) { el.innerHTML = '<p class="error-note">Enter a message first.</p>'; return; }
+    btn.disabled = true; btn.textContent = 'Analyzing…';
+    el.innerHTML = '';
+    try {
+      const res = await fetch(API_BASE_URL + '/api/v1/assess/text', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      const data = await res.json();
+      if (!res.ok) { el.innerHTML = `<p class="error-note">${data.detail || 'The backend returned an error.'}</p>`; return; }
+      renderResult(el, data, {
+        metaRows: [
+          ['Signals matched', data.text_analysis.matched_keywords.join(', ') || 'none'],
+          ['Analysis mode', data.text_analysis.model_used]
+        ]
+      });
+    } catch (e) {
+      el.innerHTML = `<p class="error-note">Couldn't reach the backend. Check that it's deployed and running.</p>`;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Analyze text';
+    }
+  }
+
+  async function assessVoice() {
+    const fileInput = document.getElementById('audioFile');
+    const btn = document.getElementById('voiceBtn');
+    const el = document.getElementById('voiceResult');
+    if (!fileInput.files.length) { el.innerHTML = '<p class="error-note">Choose an audio file first.</p>'; return; }
+    btn.disabled = true; btn.textContent = 'Analyzing…';
+    el.innerHTML = '';
+    const form = new FormData();
+    form.append('file', fileInput.files[0]);
+    try {
+      const res = await fetch(API_BASE_URL + '/api/v1/assess/voice', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok) { el.innerHTML = `<p class="error-note">${data.detail || 'The backend returned an error.'}</p>`; return; }
+      renderResult(el, data, {
+        metaRows: [
+          ['Transcript', data.transcript || '(not available on this deployment)'],
+          ['Vocal tone score', data.prosody_analysis.prosody_stress_score ?? 'unavailable']
+        ]
+      });
+    } catch (e) {
+      el.innerHTML = `<p class="error-note">Couldn't reach the backend. Check that it's deployed and running.</p>`;
+    } finally {
+      btn.disabled = false; btn.textContent = 'Analyze recording';
+    }
+  }
+
+  async function loadStatus() {
+    const list = document.getElementById('statusList');
+    try {
+      const res = await fetch(API_BASE_URL + '/api/v1/system/status');
+      const data = await res.json();
+      const labels = {
+        keyword_rules: 'Keyword rules (English + Hindi)',
+        muril_text_model: 'MuRIL language model',
+        faster_whisper: 'Speech-to-text (faster-whisper)',
+        librosa_prosody: 'Vocal-tone analysis (Librosa)',
+        fusion_model: 'Risk fusion model'
+      };
+      list.innerHTML = Object.entries(data.components).map(([key, val]) => {
+        const dot = val.startsWith('ACTIVE') || val.includes('TRAINED') ? 'dot-on'
+          : val.startsWith('FALLBACK') || val.includes('DEFAULT') ? 'dot-fallback'
+          : 'dot-off';
+        return `<li><span class="dot ${dot}"></span><span class="status-name">${labels[key] || key}</span><span class="status-state">${val}</span></li>`;
+      }).join('');
+    } catch (e) {
+      list.innerHTML = '<li><span class="dot dot-off"></span><span class="status-name">Backend not reachable</span></li>';
+    }
+  }
+
+  loadStatus();
+</script>
+</body>
+</html>

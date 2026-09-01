@@ -1,0 +1,10 @@
+services:
+  api:
+    build: .
+    container_name: sih26093-api
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - FRONTEND_ORIGIN=http://localhost:5500
+    restart: unless-stopped
