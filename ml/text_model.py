@@ -33,31 +33,67 @@ from typing import Dict, List, Tuple
 
 HIGH_DISTRESS_EN = [
     "kill myself", "suicide", "end my life", "can't take it anymore",
-    "hopeless", "no one is listening", "threatened", "assaulted", "raped",
-    "beaten", "abuse", "abused", "terrified", "scared for my life",
-    "help me please", "emergency", "bleeding", "he will kill me",
-    "she will kill me", "trapped", "locked in",
+    "hopeless", "no one is listening", "threatened", "threatening",
+    "threatening to kill",
+    "assaulted", "assault", "raped", "rape", "beaten", "beat me",
+    "beating me", "abuse", "abused", "abusing me", "terrified",
+    "scared for my life", "help me please", "emergency", "bleeding",
+    "he will kill me", "she will kill me", "he might kill me",
+    "she might kill me", "going to kill me", "trapped", "locked in",
+    "locked me in", "hit me", "hits me", "hitting me", "punched",
+    "punched me", "slapped", "slapped me", "kicked me", "strangled",
+    "strangled me", "choked me", "molested", "molesting", "attacked",
+    "attacked me", "stabbed", "kidnapped", "kidnap", "trafficking",
+    "acid attack", "in danger", "life is in danger", "blackmail",
+    "blackmailing", "extort", "extorting", "gun", "weapon", "knife to me",
+    "chasing me", "broke into my house", "broke in", "break into my house",
 ]
 MODERATE_DISTRESS_EN = [
     "scared", "afraid", "anxious", "panic", "crying", "shaking", "worried",
-    "unsafe", "threat", "harassed", "harassment", "stalking", "stalked",
-    "nightmares", "can't sleep", "flashback", "distressed", "overwhelmed",
+    "unsafe", "not safe", "threat", "harassed", "harassment", "harassing",
+    "stalking", "stalked", "following me", "followed me", "nightmares",
+    "can't sleep", "flashback", "distressed", "overwhelmed", "hurt me",
+    "hurting me", "injured", "injury", "bruise", "bruises", "violent",
+    "violence", "intimidated", "intimidating", "aggressive", "in trouble",
+    "robbed", "stole from me", "broke into", "burgled",
 ]
 
 # Hindi / Hinglish (Devanagari + common romanized forms)
 HIGH_DISTRESS_HI = [
     "मार डालूंगा", "जान से मार", "आत्महत्या", "मुझे बचाओ", "बलात्कार",
-    "मार दिया", "बंधक", "khatam kar dunga", "jaan se maar",
-    "bachao mujhe", "atmahatya", "balatkar",
+    "मार दिया", "बंधक", "मारा", "पीटा", "जान को खतरा",
+    "khatam kar dunga", "jaan se maar", "bachao mujhe", "atmahatya",
+    "balatkar", "maara", "peeta", "jaan ko khatra",
 ]
 MODERATE_DISTRESS_HI = [
     "डर लग रहा है", "परेशान", "चिंतित", "रो रही हूं", "रो रहा हूं",
-    "असुरक्षित", "धमकी", "dar lag raha", "pareshan", "chintit",
-    "asurakshit", "dhamki",
+    "असुरक्षित", "धमकी", "पीछा कर रहा है", "dar lag raha", "pareshan",
+    "chintit", "asurakshit", "dhamki", "peecha kar raha",
 ]
 
-_HIGH_WORDS = [w.lower() for w in HIGH_DISTRESS_EN + HIGH_DISTRESS_HI]
-_MOD_WORDS = [w.lower() for w in MODERATE_DISTRESS_EN + MODERATE_DISTRESS_HI]
+_HIGH_WORDS = sorted({w.lower() for w in HIGH_DISTRESS_EN + HIGH_DISTRESS_HI}, key=len, reverse=True)
+_MOD_WORDS = sorted({w.lower() for w in MODERATE_DISTRESS_EN + MODERATE_DISTRESS_HI}, key=len, reverse=True)
+
+# Tiered severity scoring: a *single* high-distress disclosure already
+# indicates serious risk and should not need a second exact-phrase hit to
+# clear the MODERATE/HIGH thresholds in ml/fusion.py. Each additional
+# distinct match nudges the score further, capped at 1.0.
+_HIGH_BASE = 0.72
+_HIGH_STEP = 0.12
+_MOD_BASE = 0.40
+_MOD_STEP = 0.12
+
+
+def _find_matches(t: str, phrases: List[str]) -> List[str]:
+    """Word-boundary match so short entries (e.g. 'threat') don't fire on
+    substrings inside unrelated words, while still matching multi-word
+    phrases and Hindi/Devanagari text."""
+    matches = []
+    for phrase in phrases:
+        pattern = r"(?<!\w)" + re.escape(phrase) + r"(?!\w)"
+        if re.search(pattern, t, flags=re.UNICODE):
+            matches.append(phrase)
+    return matches
 
 
 def keyword_rule_score(text: str) -> Tuple[float, List[str]]:
@@ -65,22 +101,25 @@ def keyword_rule_score(text: str) -> Tuple[float, List[str]]:
     if not text:
         return 0.0, []
     t = text.lower()
-    matched = []
-    score = 0.0
-    for phrase in _HIGH_WORDS:
-        if phrase in t:
-            matched.append(phrase)
-            score += 0.45
-    for phrase in _MOD_WORDS:
-        if phrase in t:
-            matched.append(phrase)
-            score += 0.2
-    # Simple punctuation/caps intensity signal
+
+    high_matches = _find_matches(t, _HIGH_WORDS)
+    mod_matches = _find_matches(t, _MOD_WORDS)
+    matched = high_matches + mod_matches
+
+    if high_matches:
+        score = _HIGH_BASE + _HIGH_STEP * (len(high_matches) - 1)
+    elif mod_matches:
+        score = _MOD_BASE + _MOD_STEP * (len(mod_matches) - 1)
+    else:
+        score = 0.0
+
+    # Simple punctuation/caps intensity signal (small nudge, not a driver)
     if re.search(r"!!+", text) or (
         sum(1 for c in text if c.isupper()) > max(6, len(text) * 0.3)
     ):
-        score += 0.1
+        score += 0.05
         matched.append("[intensity: caps/exclamation]")
+
     return min(score, 1.0), matched
 
 
