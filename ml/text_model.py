@@ -41,21 +41,29 @@ HIGH_DISTRESS_EN = [
     "he will kill me", "she will kill me", "he might kill me",
     "she might kill me", "going to kill me", "trapped", "locked in",
     "locked me in", "hit me", "hits me", "hitting me", "punched",
-    "punched me", "slapped", "slapped me", "kicked me", "strangled",
-    "strangled me", "choked me", "molested", "molesting", "attacked",
-    "attacked me", "stabbed", "kidnapped", "kidnap", "trafficking",
-    "acid attack", "in danger", "life is in danger", "blackmail",
-    "blackmailing", "extort", "extorting", "gun", "weapon", "knife to me",
-    "chasing me", "broke into my house", "broke in", "break into my house",
+    "punched me", "slapped", "slapped me", "kicked me",
+    "strangle", "strangled", "strangling", "strangled me",
+    "choke", "choked", "choking", "choked me", "chokehold",
+    "molested", "molesting", "attacked", "attacked me", "stabbed",
+    "kidnapped", "kidnap", "trafficking", "acid attack", "in danger",
+    "life is in danger", "blackmail", "blackmailing", "extort",
+    "extorting", "gun", "weapon", "knife to me", "chasing me",
+    "broke into my house", "broke in", "break into my house",
+    "grabbed my throat", "grabbed her throat", "grabbed his throat",
+    "hands around my throat", "hands around my neck", "finish me off",
+    "sending me nudes", "sending nudes", "leak them", "leak my photos",
+    "leak the photos", "leak my pictures", "revenge porn", "sextortion",
+    "expose my photos", "morphed photos",
 ]
 MODERATE_DISTRESS_EN = [
     "scared", "afraid", "anxious", "panic", "crying", "shaking", "worried",
     "unsafe", "not safe", "threat", "harassed", "harassment", "harassing",
     "stalking", "stalked", "following me", "followed me", "nightmares",
     "can't sleep", "flashback", "distressed", "overwhelmed", "hurt me",
-    "hurting me", "injured", "injury", "bruise", "bruises", "violent",
-    "violence", "intimidated", "intimidating", "aggressive", "in trouble",
+    "hurting me", "injured", "injury", "bruise", "bruises",
+    "intimidated", "intimidating", "aggressive", "in trouble",
     "robbed", "stole from me", "broke into", "burgled",
+    "domestic violence", "violent with me", "violence against me",
 ]
 
 # Hindi / Hinglish (Devanagari + common romanized forms)
@@ -83,16 +91,36 @@ _HIGH_STEP = 0.12
 _MOD_BASE = 0.40
 _MOD_STEP = 0.12
 
+# Negation cues: if a keyword match is immediately preceded (within a small
+# word window) by one of these, the match is almost always describing the
+# *absence* of distress ("not scared", "no threat here") and should not
+# count toward the score. This is a cheap, explainable guard against the
+# most common false-positive pattern in a pure keyword system.
+_NEGATIONS = {
+    "not", "no", "never", "isn't", "wasn't", "aren't", "weren't",
+    "doesn't", "didn't", "won't", "wont", "cannot", "can't", "cant",
+    "nothing", "none",
+}
+
+
+def _preceded_by_negation(t: str, match_start: int, window: int = 3) -> bool:
+    preceding_words = re.findall(r"[a-z']+", t[:match_start])[-window:]
+    return any(w in _NEGATIONS for w in preceding_words)
+
 
 def _find_matches(t: str, phrases: List[str]) -> List[str]:
-    """Word-boundary match so short entries (e.g. 'threat') don't fire on
-    substrings inside unrelated words, while still matching multi-word
-    phrases and Hindi/Devanagari text."""
+    """Word-boundary match (with optional trailing 's' for simple plurals,
+    e.g. 'flashback'/'flashbacks', 'bruise'/'bruises') so short entries
+    (e.g. 'threat') don't fire on substrings inside unrelated words, while
+    still matching multi-word phrases and Hindi/Devanagari text. A phrase
+    counts as matched only if at least one occurrence isn't negated."""
     matches = []
     for phrase in phrases:
-        pattern = r"(?<!\w)" + re.escape(phrase) + r"(?!\w)"
-        if re.search(pattern, t, flags=re.UNICODE):
-            matches.append(phrase)
+        pattern = r"(?<!\w)" + re.escape(phrase) + r"s?(?!\w)"
+        for m in re.finditer(pattern, t, flags=re.UNICODE):
+            if not _preceded_by_negation(t, m.start()):
+                matches.append(phrase)
+                break
     return matches
 
 
